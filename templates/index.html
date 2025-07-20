@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Header Checker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .check-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .check-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .result-section {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-header {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .result-header h3 {
+            font-size: 1.3rem;
+            color: #2c3e50;
+        }
+
+        .result-content {
+            padding: 30px;
+        }
+
+        .https-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .https-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .https-status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .headers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .headers-table th,
+        .headers-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .headers-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .headers-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .header-value {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #f5c6cb;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .headers-table {
+                font-size: 0.9rem;
+            }
+            
+            .headers-table th,
+            .headers-table td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Security Header Checker</h1>
+            <p>Analyze website security headers and HTTPS configuration</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <input type="text" id="urlInput" class="url-input" placeholder="Enter website URL (e.g., google.com or https://example.com)" />
+                    <button id="checkBtn" class="check-btn">
+                        <i class="fas fa-search"></i>
+                        Check Security
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Analyzing security headers...</p>
+            </div>
+
+            <div id="results" class="results">
+                <div class="result-section">
+                    <div class="result-header">
+                        <i class="fas fa-lock"></i>
+                        <h3>HTTPS Status</h3>
+                    </div>
+                    <div class="result-content">
+                        <div id="httpsStatus" class="https-status"></div>
+                    </div>
+                </div>
+
+                <div class="result-section">
+                    <div class="result-header">
+                        <i class="fas fa-list-alt"></i>
+                        <h3>Security Headers Analysis</h3>
+                    </div>
+                    <div class="result-content">
+                        <div id="headersTable"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 Security Header Checker. Built with Flask and modern web technologies.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('urlInput');
+            const checkBtn = document.getElementById('checkBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const httpsStatus = document.getElementById('httpsStatus');
+            const headersTable = document.getElementById('headersTable');
+
+            checkBtn.addEventListener('click', checkSecurity);
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkSecurity();
+                }
+            });
+
+            function checkSecurity() {
+                const url = urlInput.value.trim();
+                if (!url) {
+                    alert('Please enter a URL');
+                    return;
+                }
+
+                // Show loading
+                loading.style.display = 'block';
+                results.style.display = 'none';
+                checkBtn.disabled = true;
+
+                fetch('/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    displayError('An error occurred while checking the URL. Please try again.');
+                })
+                .finally(() => {
+                    loading.style.display = 'none';
+                    checkBtn.disabled = false;
+                });
+            }
+
+            function displayResults(data) {
+                results.style.display = 'block';
+
+                // Display HTTPS status
+                const httpsData = data.https_check;
+                httpsStatus.className = `https-status ${httpsData.status}`;
+                httpsStatus.innerHTML = httpsData.message;
+
+                // Display headers
+                if (data.headers_check.status === 'success') {
+                    const headers = data.headers_check.results;
+                    let tableHTML = `
+                        <table class="headers-table">
+                            <thead>
+                                <tr>
+                                    <th>Security Header</th>
+                                    <th>Status</th>
+                                    <th>Value</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    headers.forEach(header => {
+                        const statusClass = header.present ? 'success' : 'warning';
+                        const statusText = header.present ? 'Present' : 'Missing';
+                        const valueClass = header.present ? 'header-value' : '';
+                        
+                        tableHTML += `
+                            <tr>
+                                <td><strong>${header.header}</strong></td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td><span class="${valueClass}">${header.value}</span></td>
+                                <td>${header.description}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += '</tbody></table>';
+                    headersTable.innerHTML = tableHTML;
+                } else {
+                    headersTable.innerHTML = `<div class="error-message">${data.headers_check.message}</div>`;
+                }
+            }
+
+            function displayError(message) {
+                results.style.display = 'block';
+                httpsStatus.innerHTML = '';
+                headersTable.innerHTML = `<div class="error-message">${message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html> 
